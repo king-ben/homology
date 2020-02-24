@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><beast beautitemplate='Standard' beautistatus='' namespace="beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood" version="2.0">
+
+
+<!--
+THE DATA
+TAXON NAMES
+MATRIX
+DUMMY CHARACTERS AT THE END OF EACH LINE, IF CORRECTING FOR ASCERTAINMENT BIAS
+DATATYPE
+
+-->
+
+<data id="matrix" dataType="standard" name="alignment">
+	<sequence id="seq_compare1_1" spec="Sequence" taxon="compare1_1" totalcount="2" value="00000001010101"/>
+  <sequence id="seq_compare1_2" spec="Sequence" taxon="compare1_2" totalcount="2" value="00001001010101"/>
+  <sequence id="seq_compare1_3" spec="Sequence" taxon="compare1_3" totalcount="2" value="00001101010101"/>
+  <sequence id="seq_compare2_1" spec="Sequence" taxon="compare2_1" totalcount="2" value="11111110101001"/>
+  <sequence id="seq_compare2_2" spec="Sequence" taxon="compare2_2" totalcount="2" value="11111110101001"/>
+  <sequence id="seq_compare2_3" spec="Sequence" taxon="compare2_3" totalcount="2" value="11110110101001"/>
+  <sequence id="seq_test1" spec="Sequence" taxon="test1" totalcount="2" value="01000101100101"/>
+  <sequence id="seq_test2" spec="Sequence" taxon="test2" totalcount="2" value="01100001101001"/>
+  <sequence id="seq_test3" spec="Sequence" taxon="test3" totalcount="2" value="01110001101001"/>
+  <userDataType id="StandardData.0" spec="beast.evolution.datatype.StandardData" ambiguities="" nrOfStates="2"/>
+</data>
+
+
+
+<!-- TAXON SETS -->
+
+<taxonset id="all" spec="TaxonSet">
+	<taxon id="compare1_1" spec="Taxon"/>
+	<taxon id="compare1_2" spec="Taxon"/>
+	<taxon id="compare1_3" spec="Taxon"/>
+	<taxon id="compare2_1" spec="Taxon"/>
+	<taxon id="compare2_2" spec="Taxon"/>
+	<taxon id="compare2_3" spec="Taxon"/>
+	<taxon id="test1" spec="Taxon"/>
+	<taxon id="test2" spec="Taxon"/>
+	<taxon id="test3" spec="Taxon"/>
+
+</taxonset>
+
+<!-- TIP DATES -->
+ <trait id="tipDates" spec="beast.evolution.tree.TraitSet" traitname="date-backward" value='
+								compare1_1=4,
+                compare1_2=5,
+                compare1_3=6,
+                compare2_1=3,
+                compare2_2=7,
+                compare2_3=2,
+                test1=0,
+                test2=1,
+                test3=0 '>
+	<taxa id="allTaxa" spec="TaxonSet">
+		<alignment idref="matrix"/>
+	</taxa>
+</trait>
+
+
+
+<!-- THE STARTING TREE -->
+
+<init id="tree" spec="beast.evolution.tree.RandomTree" estimate="true" taxa="@matrix" trait="@tipDates">
+	<populationModel id="constantPop" spec="ConstantPopulation">
+		<parameter id="randomPopSize" name="popSize">1.0</parameter>
+	</populationModel>
+</init>
+
+
+<!--SITE MODEL     LEWIS MKV WITH GAMMA  -->
+
+<!-- shared gamma -->
+
+<!-- set up data partitions -->
+<data id="matrix2" spec="FilteredAlignment" data="@matrix" ascertained="true" excludefrom="6" excludeto="8" filter="1-6,13-14">
+	<userDataType id="morph2" spec="beast.evolution.datatype.StandardData" nrOfStates="2"/>
+</data>
+
+<IntegerParameter id="homology" spec="parameter.IntegerParameter" dimension="1" upper="2" lower="0" estimate="true">0</IntegerParameter>
+
+<data id="homology0" spec="FilteredAlignment" ascertained="true" data="@matrix" excludefrom="2" excludeto="4" filter="7-8,13-14">
+	<userDataType idref="morph2"/>
+</data>
+
+<data id="homology1" spec="FilteredAlignment" ascertained="true" data="@matrix" excludefrom="2" excludeto="4" filter="9-10,13-14">
+	<userDataType idref="morph2"/>
+</data>
+
+<data id="homology2" spec="FilteredAlignment" ascertained="true" data="@matrix" excludefrom="2" excludeto="4" filter="11-14">
+	<userDataType idref="morph2"/>
+</data>
+
+<distribution id="homology0TreeLikelihood" spec="beast.evolution.likelihood.TreeLikelihood" data="@homology0" tree="@tree" siteModel="@morphSiteModel2" branchRateModel="@strictClock" useAmbiguities="true"/>
+<distribution id="homology1TreeLikelihood" spec="beast.evolution.likelihood.TreeLikelihood" data="@homology1" tree="@tree" siteModel="@morphSiteModel2" branchRateModel="@strictClock" useAmbiguities="true"/>
+<distribution id="homology2TreeLikelihood" spec="beast.evolution.likelihood.TreeLikelihood" data="@homology2" tree="@tree" siteModel="@morphSiteModel2" branchRateModel="@strictClock" useAmbiguities="true"/>
+
+
+
+
+
+<!-- set up site models -->
+<siteModel id="morphSiteModel2" spec="SiteModel">
+	<parameter id="mutationRate" estimate="false" name="mutationRate">1.0</parameter>
+	<parameter estimate="false" id="proportionInvariant" lower="0.0" name="proportionInvariant" upper="1.0">0.0</parameter>
+	<substModel datatype="@morph2" id="LewisMK" spec="LewisMK"/>
+</siteModel>
+
+
+
+<!-- THE STRICT CLOCK -->
+
+
+<branchRateModel id="strictClock" spec="beast.evolution.branchratemodel.StrictClockModel">
+		<parameter id="clockRate" spec="parameter.RealParameter" estimate="true" name="clock.rate">1.0</parameter>
+</branchRateModel>
+
+<run id="mcmc" spec="MCMC" chainLength="1000000" storeEvery="1000">
+
+
+    <distribution id="posterior" spec="util.CompoundDistribution">
+
+		<!-- THE PRIORS -->
+        <distribution id="prior" spec="util.CompoundDistribution">
+
+			<!-- TREE PRIOR -->
+			<!-- SAMPLED ANCESTOR MODEL -->
+			<!-- remove rho, no extant taxa. -->
+
+
+			<distribution  id="birthDeath" spec="beast.evolution.speciation.SABirthDeathModel" tree="@tree" conditionOnRhoSampling="false">
+                <parameter name="origin" id='origin' value="30."/>
+                <parameter name="birthRate" id='birthRate' value="0.2"/>
+                <parameter name="deathRate" id='deathRate' value="0.1"/>
+                <parameter name="samplingRate" id='samplingRate' value="0.07"/>
+                <parameter name="removalProbability" id='r' value="0." lower="0." upper="1."/>
+
+            </distribution>
+
+			<!-- PRIOR DISTRIBUTIONS ON TREE PARAMETERS -->
+
+			<distribution id="origin_prior" spec="beast.math.distributions.Prior" x="@origin">
+                <distr spec="beast.math.distributions.Uniform" lower="0." upper="2000." offset="0."/>
+            </distribution>
+
+            <distribution id="birthRate_prior" spec="beast.math.distributions.Prior" x="@birthRate">
+                <distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="false" M="-2" S="1"/>
+            </distribution>
+
+            <distribution id="deathRate_prior" spec="beast.math.distributions.Prior" x="@deathRate">
+                <distr spec="beast.math.distributions.Exponential" mean="0.1"/>
+            </distribution>
+
+            <distribution id="samplingRate_prior" spec="beast.math.distributions.Prior" x="@samplingRate">
+                <distr spec="beast.math.distributions.Exponential" mean="0.1"/>
+            </distribution>
+
+			<!-- SITE MODEL PRIORS -->
+
+
+			<!-- CLOCK PRIORS -->
+
+
+            <distribution id="clockRatePrior" spec="beast.math.distributions.Prior" x="@clockRate">
+                <distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="false" M="-5" S="1.4"/>
+            </distribution>
+
+
+			<!-- PRIORS ON TAXON SETS, MONOPHYLY OR AGE -->
+
+
+
+
+
+
+
+        </distribution>
+        <distribution id="likelihood" spec="util.CompoundDistribution">
+			<distribution id="morphTreeLikelihood.matrix2" spec="TreeLikelihood" data="@matrix2" tree="@tree" siteModel="@morphSiteModel2" branchRateModel="@strictClock" useAmbiguities="true"/>
+			<distribution id="homologyPicker" spec="beast.evolution.likelihood.HomologyList" homology="@homology">
+				<homologyTreeLikelihood id="hom0" spec="beast.evolution.likelihood.HomologyTreeLikelihood2" input="@homology0TreeLikelihood" homologyState="0"/>
+				<homologyTreeLikelihood id="hom1" spec="beast.evolution.likelihood.HomologyTreeLikelihood2" input="@homology1TreeLikelihood" homologyState="1"/>
+				<homologyTreeLikelihood id="hom2" spec="beast.evolution.likelihood.HomologyTreeLikelihood2" input="@homology2TreeLikelihood" homologyState="2"/>
+			</distribution>
+
+
+
+        </distribution>
+
+
+
+
+    </distribution>
+
+
+
+	<!-- THE STATE, TO BE SAVED FOR CHECKPOINTING -->
+
+
+	<state id="state" storeEvery="1000">
+
+
+		<tree idref="tree" name="stateNode">
+        <taxonset idref="allTaxa"/>
+        </tree>
+        <stateNode idref="clockRate"/>
+				<stateNode idref="origin"/>
+        <stateNode idref="deathRate"/>
+        <stateNode idref="samplingRate"/>
+        <stateNode idref="birthRate"/>
+				<stateNode idref="homology"/>
+				<stateNode idref="conditionalProbs"/>
+    </state>
+
+
+
+    <!-- OPERATORS -->
+
+	<operator id="originScaler" parameter="@origin" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
+	<operator id='birthRateOperator' spec='ScaleOperator' scaleFactor=".75" weight="1." parameter="@birthRate"/>
+	<operator id='deathRateOperator' spec='ScaleOperator' scaleFactor=".75" weight="1." parameter="@deathRate"/>
+	<operator id='samplingRateOperator' spec='ScaleOperator' scaleFactor=".75" weight="2." parameter="@samplingRate"/>
+	<operator id="updownBirthdeathRate" spec="UpDownOperator" scaleFactor=".95" weight="2." up="@birthRate" down="@origin"/>
+
+
+
+	<operator spec='LeafToSampledAncestorJump' weight="3." tree="@tree"/>
+
+	<operator spec='SAWilsonBalding' weight="1." tree="@tree"/>
+<!--
+	<operator id="homologyWilsonBalding" spec='HomologySAWilsonBalding' tree="@tree" homology="@homology" weight="1."/>
+-->
+
+  <operator spec='SAExchange' isNarrow="false" weight="1." tree="@tree"/>
+  <operator spec='SAExchange' weight="5." tree="@tree"/>
+<!--
+	<operator spec='HomologySAExchange' isNarrow="false" weight="1." tree="@tree" homology="@homology"/>
+  <operator spec='HomologySAExchange' weight="5." tree="@tree" homology="@homology"/>
+-->
+  <operator spec='SAUniform' weight="5." tree="@tree"/>
+  <operator id='treeScaler' spec='SAScaleOperator' scaleFactor=".95" weight="0.5" tree="@tree"/>
+  <operator id='rootScaler' spec='SAScaleOperator' scaleFactor=".95" weight="0.1" tree="@tree" rootOnly='true'/>
+
+
+	<operator id="clockRateSclaer" parameter="@clockRate" scaleFactor="0.5" spec="ScaleOperator" weight="3.0"/>
+	<operator id="strictUpdownTree" spec="UpDownOperator" scaleFactor=".95" weight="3.0" up="@clockRate" down="@tree"/>
+	<!--
+	<operator spec="beast.evolution.operators.UniformOperator" id="homologyflipper" parameter="@homology" weight="0.5"/>
+-->
+	<operator spec="beast.evolution.operators.GibbsHomologyOperator" id="GibbsHomology" parameter="@homology" weight="0.2">
+		<parameter id="conditionalProbs" spec="parameter.RealParameter" name="conditionalProbabilities">0.2 0.4 0.4</parameter>
+	</operator>
+	<!-- LOG FILE, SCREEN LOG, AND TREE LOG -->
+
+
+    <logger id="tracelog" fileName="dh7.log" logEvery="1000" model="@posterior" sanitiseHeaders="true" sort="smart">
+        <log idref="posterior"/>
+        <log idref="likelihood"/>
+        <log idref="prior"/>
+				<log idref="morphTreeLikelihood.matrix2"/>
+				<log id="treeHeight" spec="beast.evolution.tree.TreeHeightLogger" tree="@tree"/>
+        <log idref="clockRate"/>
+				<log idref="origin"/>
+        <log idref="birthRate"/>
+        <log idref="deathRate"/>
+        <log idref="samplingRate"/>
+				<log id="SACount" spec="beast.evolution.tree.SampledAncestorLogger" tree="@tree"/>
+				<log idref="homology"/>
+				<log idref="homologyPicker"/>
+				<!-- logged for curiosity only, values only updated when proposal accepted -->
+				<log idref="homology0TreeLikelihood"/>
+				<log idref="homology1TreeLikelihood"/>
+				<log idref="homology2TreeLikelihood"/>
+    </logger>
+
+    <logger id="screenlog" logEvery="1000">
+				<log idref="homology0TreeLikelihood"/>
+				<log idref="homology1TreeLikelihood"/>
+				<log idref="homology2TreeLikelihood"/>
+				<log idref="homologyPicker"/>
+				<log idref="homology"/>
+				<log idref="posterior"/>
+        <log id="ESS.0" spec="util.ESS" arg="@posterior"/>
+        <log idref="likelihood"/>
+        <log idref="prior"/>
+				<log idref="treeHeight" />
+				<log idref="SACount"/>
+    </logger>
+
+	<logger id="treelog" fileName="dh7.trees" logEvery="1000" mode="tree">
+        <log id="TreeWithMetaDataLogger" spec="beast.evolution.tree.TreeWithMetaDataLogger" branchratemodel="@strictClock" tree="@tree"/>
+    </logger>
+
+
+
+</run>
+
+</beast>
