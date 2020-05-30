@@ -48,6 +48,7 @@ public class HomologyMultiplexer extends Distribution {
         }
 	}
 	
+    protected double storedLogP = Double.NaN;
 	@Override
 	public double calculateLogP() {
 		logP = 0;
@@ -81,4 +82,11 @@ public class HomologyMultiplexer extends Distribution {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	@Override
+    protected boolean requiresRecalculation() {
+        
+            return true;
+        
+    }
 }
