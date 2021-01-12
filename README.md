@@ -6,7 +6,7 @@ King, B. and Rücklin, M. (2020). [A Bayesian approach to dynamic homology of mo
 
 The package implements a model in which alternative alignments (homology alignments) corresponding to different conjectures of morphological homology are selected during the MCMC, based on a free homology parameter.
 
-![](doc/model.jpg "Graphical model of a dynamic homology partition")
+![Graphical model of a dynamic homology partition](doc/model.jpg "Graphical model of a dynamic homology partition")
 
 Installing package manually
 ---------------------------
