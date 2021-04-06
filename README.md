@@ -2,7 +2,7 @@
 BEAST2 package for dynamic homology of morphological characters.
 
 This package is associated with the following publication:
-King, B. and Rücklin, M. (2020). [A Bayesian approach to dynamic homology of morphological characters and the ancestral phenotype of jawed vertebrates ](https://peerj.com/articles/9368/). eLife:e62374.
+King, B. and Rücklin, M. (2020). [A Bayesian approach to dynamic homology of morphological characters and the ancestral phenotype of jawed vertebrates ](https://elifesciences.org/articles/62374). eLife:e62374.
 
 The package implements a model in which alternative alignments (homology alignments) corresponding to different conjectures of morphological homology are selected during the MCMC, based on a free homology parameter.
 
